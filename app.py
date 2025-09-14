@@ -242,7 +242,7 @@ def apply_filters(df):
         out = out[out["Braking_System"].isin(abs_type)]
 
     def between(col, rng):
-        return (out[col] >= rng) & (out[col] <= rng[1])
+        return (out[col] >= rng[0]) & (out[col] <= rng[1])
 
     out = out[between("Ex_Showroom_Price_Lakh", price_rng)]
     out = out[between("Displacement_CC", cc_rng)]
@@ -308,18 +308,18 @@ with tab1:
 
     with c4:
         st.markdown("#### Score Radar (Select One)")
-        target = st.selectbox("Pick a bike", fil["Bike_Name"].tolist())
-        one = fil[fil["Bike_Name"]==target].iloc
-        radar_fields = ["Price_Score","Power_Score","Mileage_Score","ABS_Score","Engine_Config_Score",
-                        "Cooling_Score","Transmission_Score","Seat_Height_Score","Weight_Score",
-                        "Range_Score","Service_Network_Score","Brand_Reputation_Score"]
-        theta = radar_fields + [radar_fields]
-        r = [float(one[x]) for x in radar_fields] + [float(one[radar_fields])]
-        fig4 = go.Figure(data=go.Scatterpolar(r=r, theta=theta, fill='toself', name=one["Bike_Name"]))
-        fig4.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0,10])), showlegend=False, height=420)
-        st.plotly_chart(fig4, use_container_width=True)
-        st.caption("Spider chart highlights where the selected bike excels or lags.")
-        st.caption("Use to match strengths with personal priorities and routes.")
+    target = st.selectbox("Pick a bike", fil["Bike_Name"].tolist())
+    one_row = fil[fil["Bike_Name"]==target].iloc[0]
+    radar_fields = ["Price_Score","Power_Score","Mileage_Score","ABS_Score","Engine_Config_Score",
+            "Cooling_Score","Transmission_Score","Seat_Height_Score","Weight_Score",
+            "Range_Score","Service_Network_Score","Brand_Reputation_Score"]
+    theta = radar_fields + [radar_fields[0]]
+    r = [float(one_row[x]) for x in radar_fields] + [float(one_row[radar_fields[0]])]
+    fig4 = go.Figure(data=go.Scatterpolar(r=r, theta=theta, fill='toself', name=one_row["Bike_Name"]))
+    fig4.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0,10])), showlegend=False, height=420)
+    st.plotly_chart(fig4, use_container_width=True)
+    st.caption("Spider chart highlights where the selected bike excels or lags.")
+    st.caption("Use to match strengths with personal priorities and routes.")
 
 with tab2:
     st.subheader("Bike Explorer")
