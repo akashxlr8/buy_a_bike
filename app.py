@@ -4,6 +4,9 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import matplotlib
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
 
 st.set_page_config(page_title="India 350-650cc Motorcycles — Evaluation Studio",
                    layout="wide",
@@ -196,6 +199,72 @@ def two_line(col):
     lines = EXPLAIN.get(col, ["No description available.", ""] )
     return f"{lines}\n{lines[1]}"
 
+
+def higher_better_for():
+    """Return a mapping of column -> whether higher values are better.
+
+    True means greener when delta > 0. False means greener when delta < 0.
+    """
+    return {
+        # positive is better
+        "Mileage_KMPL": True,
+        "Displacement_CC": True,
+        "Power_PS": True,
+        "Torque_Nm": True,
+        "Power_to_Weight_Ratio": True,
+        "Price_Score": True,
+        "Power_Score": True,
+        "Torque_Score": True,
+        "Mileage_Score": True,
+        # negative is better (lower price, lower insurance, lower EMI)
+        "Ex_Showroom_Price_Lakh": False,
+        "On_Road_Price_Est_Lakh": False,
+        "Insurance_Annual_Est": False,
+        "EMI_2000_Down_36m": False,
+    }
+
+
+def style_deltas(df, col_preferences=None, cmap_pos="Greens", cmap_neg="Reds"):
+    """Return a pandas Styler for the deltas DataFrame where colors reflect meaningful direction.
+
+    - col_preferences: dict col->bool where True means higher is better.
+    - Positive deltas shown using Greens (more positive -> greener when higher is better,
+      or redder when lower is better). Negative deltas shown using Reds.
+    """
+    if col_preferences is None:
+        col_preferences = higher_better_for()
+
+    # normalize deltas per column to map to 0..1
+    styled = df.copy()
+
+    def color_for_value(col, val):
+        # pick preference (True => higher better)
+        pref = col_preferences.get(col, True)
+        # use symmetric scaling based on max absolute value
+        col_vals = df[col].astype(float)
+        max_abs = max(col_vals.abs().max(), 1e-6)
+        norm = abs(val) / max_abs
+        norm = min(norm, 1.0)
+        if val == 0:
+            return "background-color: transparent"
+        if (val > 0 and pref) or (val < 0 and not pref):
+            # positive is 'good' -> use green palette
+            cmap = cm.get_cmap(cmap_pos)
+            rgba = cmap(norm)
+        else:
+            # positive is 'bad' -> use red palette (i.e., negative is good)
+            cmap = cm.get_cmap(cmap_neg)
+            rgba = cmap(norm)
+        hexc = mcolors.to_hex(rgba)
+        
+        return f"background-color: {hexc}; color: white"
+
+    def apply_row(row):
+        return [color_for_value(col, row[col]) for col in df.columns]
+
+    styler = df.style.apply(lambda r: apply_row(r), axis=1)
+    return styler
+
 # UI Header
 st.title("🏍️ India 350–650cc Motorcycles — Interactive Evaluation Studio")
 st.caption("Explore, filter, and compare every motorcycle with rich charts, tables, and a full evaluation matrix.")
@@ -308,18 +377,18 @@ with tab1:
 
     with c4:
         st.markdown("#### Score Radar (Select One)")
-    target = st.selectbox("Pick a bike", fil["Bike_Name"].tolist())
-    one_row = fil[fil["Bike_Name"]==target].iloc[0]
-    radar_fields = ["Price_Score","Power_Score","Mileage_Score","ABS_Score","Engine_Config_Score",
-            "Cooling_Score","Transmission_Score","Seat_Height_Score","Weight_Score",
-            "Range_Score","Service_Network_Score","Brand_Reputation_Score"]
-    theta = radar_fields + [radar_fields[0]]
-    r = [float(one_row[x]) for x in radar_fields] + [float(one_row[radar_fields[0]])]
-    fig4 = go.Figure(data=go.Scatterpolar(r=r, theta=theta, fill='toself', name=one_row["Bike_Name"]))
-    fig4.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0,10])), showlegend=False, height=420)
-    st.plotly_chart(fig4, use_container_width=True)
-    st.caption("Spider chart highlights where the selected bike excels or lags.")
-    st.caption("Use to match strengths with personal priorities and routes.")
+        target = st.selectbox("Pick a bike", fil["Bike_Name"].tolist())
+        one_row = fil[fil["Bike_Name"]==target].iloc[0]
+        radar_fields = ["Price_Score","Power_Score","Mileage_Score","ABS_Score","Engine_Config_Score",
+                "Cooling_Score","Transmission_Score","Seat_Height_Score","Weight_Score",
+                "Range_Score","Service_Network_Score","Brand_Reputation_Score"]
+        theta = radar_fields + [radar_fields[0]]
+        r = [float(one_row[x]) for x in radar_fields] + [float(one_row[radar_fields[0]])]
+        fig4 = go.Figure(data=go.Scatterpolar(r=r, theta=theta, fill='toself', name=one_row["Bike_Name"]))
+        fig4.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0,10])), showlegend=False, height=420)
+        st.plotly_chart(fig4, use_container_width=True)
+        st.caption("Spider chart highlights where the selected bike excels or lags.")
+        st.caption("Use to match strengths with personal priorities and routes.")
 
 with tab2:
     st.subheader("Bike Explorer")
@@ -341,13 +410,15 @@ with tab3:
         st.dataframe(comp.set_index("Bike_Name"), use_container_width=True, height=400)
 
         # Differences vs baseline
-        base = comp.iloc
+        base = comp.iloc[0]
         st.markdown(f"##### Delta vs baseline: {base['Bike_Name']}")
         num_cols = [c for c in comp.columns if pd.api.types.is_numeric_dtype(comp[c])]
         deltas = comp.copy()
         for c in num_cols:
             deltas[c] = comp[c] - float(base[c])
-        st.dataframe(deltas.set_index("Bike_Name")[num_cols].style.background_gradient(cmap="RdYlGn"), use_container_width=True)
+        df_for_style = deltas.set_index("Bike_Name")[num_cols]
+        styler = style_deltas(df_for_style)
+        st.dataframe(styler, use_container_width=True)
         st.caption("Positive deltas mean higher than baseline; negative implies lower than baseline.")
         st.caption("Use to quickly spot where each bike gains or loses versus the selected baseline.")
     else:
