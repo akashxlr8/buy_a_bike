@@ -249,11 +249,11 @@ def style_deltas(df, col_preferences=None, cmap_pos="Greens", cmap_neg="Reds"):
             return "background-color: transparent"
         if (val > 0 and pref) or (val < 0 and not pref):
             # positive is 'good' -> use green palette
-            cmap = cm.get_cmap(cmap_pos)
+            cmap = matplotlib.colormaps.get_cmap(cmap_pos)
             rgba = cmap(norm)
         else:
             # positive is 'bad' -> use red palette (i.e., negative is good)
-            cmap = cm.get_cmap(cmap_neg)
+            cmap = matplotlib.colormaps.get_cmap(cmap_neg)
             rgba = cmap(norm)
         hexc = mcolors.to_hex(rgba)
         
@@ -349,7 +349,7 @@ with tab1:
                      color_discrete_sequence=px.colors.qualitative.Set2)
         fig.update_traces(texttemplate="%{text:.2f}", textposition="outside")
         fig.update_layout(xaxis_tickangle=-35, height=500, margin=dict(l=10,r=10,b=10,t=40))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
         st.caption("Ranks motorcycles by the blended score to quickly shortlist options.")
         st.caption("Use the sidebar to refine by brand, engine, or budget, and see ranks update.")
 
@@ -361,7 +361,7 @@ with tab1:
                           hover_data=["Bike_Name","Manufacturer","Torque_Nm","Mileage_KMPL"],
                           color_discrete_sequence=px.colors.qualitative.Set2)
         fig2.update_layout(height=500, margin=dict(l=10,r=10,b=10,t=40))
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, width='stretch')
         st.caption("Bubbles farther right and higher indicate more expensive and powerful bikes.")
         st.caption("Larger bubbles have better power-to-weight ratios for a lively feel.")
 
@@ -371,7 +371,7 @@ with tab1:
         fig3 = px.histogram(fil, x="Mileage_KMPL", nbins=20, color="Manufacturer",
                             color_discrete_sequence=px.colors.qualitative.Set2)
         fig3.update_layout(height=420, margin=dict(l=10,r=10,b=10,t=40))
-        st.plotly_chart(fig3, use_container_width=True)
+        st.plotly_chart(fig3, width='stretch')
         st.caption("Visualizes fuel efficiency spread across all filtered bikes.")
         st.caption("Right-skewed histograms indicate more efficient sets in view.")
 
@@ -386,14 +386,14 @@ with tab1:
         r = [float(one_row[x]) for x in radar_fields] + [float(one_row[radar_fields[0]])]
         fig4 = go.Figure(data=go.Scatterpolar(r=r, theta=theta, fill='toself', name=one_row["Bike_Name"]))
         fig4.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0,10])), showlegend=False, height=420)
-        st.plotly_chart(fig4, use_container_width=True)
+        st.plotly_chart(fig4, width='stretch')
         st.caption("Spider chart highlights where the selected bike excels or lags.")
         st.caption("Use to match strengths with personal priorities and routes.")
 
 with tab2:
     st.subheader("Bike Explorer")
     st.caption("Filter further by searching the table and click a row to pin details below.")
-    st.dataframe(fil, use_container_width=True, height=420)
+    st.dataframe(fil, width='stretch', height=420)
     st.markdown("---")
     st.markdown("#### Column Guide — Two-line explanations")
     for col in fil.columns:
@@ -407,7 +407,7 @@ with tab3:
     if len(picks) >= 2:
         comp = fil[fil["Bike_Name"].isin(picks)].copy()
         st.markdown("##### Full Specification Table")
-        st.dataframe(comp.set_index("Bike_Name"), use_container_width=True, height=400)
+        st.dataframe(comp.set_index("Bike_Name"), width='stretch', height=400)
 
         # Differences vs baseline
         base = comp.iloc[0]
@@ -418,7 +418,7 @@ with tab3:
             deltas[c] = comp[c] - float(base[c])
         df_for_style = deltas.set_index("Bike_Name")[num_cols]
         styler = style_deltas(df_for_style)
-        st.dataframe(styler, use_container_width=True)
+        st.dataframe(styler, width='stretch')
         st.caption("Positive deltas mean higher than baseline; negative implies lower than baseline.")
         st.caption("Use to quickly spot where each bike gains or loses versus the selected baseline.")
     else:
@@ -461,7 +461,7 @@ with tab4:
         fig = go.Figure()
 
     fig.update_layout(height=520, margin=dict(l=10,r=10,b=10,t=40))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
     st.caption("Use the studio to build the exact visualization needed for a specific question.")
     st.caption("Try Price vs Power with bubble size as PTW and color by Engine Configuration for performance insights.")
 
@@ -476,12 +476,12 @@ with tab5:
         Avg_VFM=("Value_for_Money","mean")
     ).reset_index().sort_values("Avg_Overall", ascending=False)
 
-    st.dataframe(grp, use_container_width=True)
+    st.dataframe(grp, width='stretch')
     fig = px.bar(grp, x="Manufacturer", y="Avg_Overall", text="Avg_Overall",
                  color="Avg_Price", color_continuous_scale="Blues")
     fig.update_traces(texttemplate="%{text:.2f}", textposition="outside")
     fig.update_layout(height=480, margin=dict(l=10,r=10,b=10,t=40))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
     st.caption("Ranks brands by average overall score across filtered models.")
     st.caption("Hover for power, mileage, and price context per manufacturer.")
 
