@@ -56,16 +56,19 @@ Note: On Windows with Git Bash, use the same commands in a bash shell.
 - To change default filters or default baseline bike, open `app.py` and look for the `DEFAULTS` or sidebar initialization block near the top.
 - If you change column names in the CSV, update the `COLUMN_MAP` or any references to raw column names inside `app.py`.
 - Add additional metrics: compute new numeric columns in the CSV or add on-the-fly derived columns using `pandas` in `app.py`.
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/d6248290-c978-4350-ad69-82759a582219" />
 
 ## Examples
 
 1) Quick compare
 
  - Open the app, go to "Compare Bikes", select a baseline bike and 2-4 others. Observe the delta matrix colors where green indicates a positive change for metrics that are "higher is better" and red otherwise.
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/d87311e4-e873-4fa5-b322-7872d2c09043" />
 
 2) Custom chart
 
  - Go to "Chart Studio", choose `price` on X, `power` on Y, color by `manufacturer`, and size by `power/weight` to visualize value vs performance.
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/13f3edca-3a9e-4c5e-9506-5f4b54f554f4" />
 
 ## Troubleshooting
 
